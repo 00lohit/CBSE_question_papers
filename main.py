@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 import requests
 import shutil
 from urllib.parse import urljoin, urlparse, unquote
-
+from zipfile import ZipFile
 def download_question_papers(subject_name, standard, output_folder, error_log_path):
     # Ensure the output folder exists, create it if not
     if not os.path.exists(output_folder):
@@ -53,17 +53,39 @@ def log_error(error_log_path, message):
     with open(error_log_path, 'a') as log_file:
         log_file.write(f"{message}\n")
 
+def extract_zip(zip_path, extraction_path):
+    """
+    Extract the contents of a ZIP file to the specified extraction path.
+    :param zip_path: Path to the ZIP file.
+    :param extraction_path: Path where the contents should be extracted.
+    """
+    with ZipFile(zip_path, 'r') as zip_ref:
+        zip_ref.extractall(extraction_path)
+
+def process_downloaded_files(output_folder, extraction_folder):
+    # Get a list of all downloaded ZIP files
+    zip_files = [file for file in os.listdir(output_folder) if file.endswith('.zip')]
+
+    for zip_file in zip_files:
+        zip_file_path = os.path.join(output_folder, zip_file)
+        extraction_output_path = os.path.join(extraction_folder, os.path.splitext(zip_file)[0])
+
+        # Extract the contents of the ZIP file
+        extract_zip(zip_file_path, extraction_output_path)
+
+        print(f"Extracted contents from {zip_file} to {extraction_output_path}")
+
+        # Remove the original ZIP file
+        os.remove(zip_file_path)
+        print(f"Deleted {zip_file}")
+
 if __name__ == "__main__":
-    # Replace 'subject_name' with the subject you're interested in
-    subject_name = 'ACCOUNTANCY'
-
-    # Replace 'standard' with the desired standard/class information
+    # Replace 'subject_name', 'standard', 'output_folder', and 'error_log_path' as before
+    subject_name = 'ECONOMICS'
     standard = 'XII'
-
-    # Replace 'output_folder' with the path where you want to save the downloaded question papers
     output_folder = './question_papers'
-
-    # Replace 'error_log_path' with the path where you want to save the error log
     error_log_path = './error_log.txt'
 
+
     download_question_papers(subject_name, standard, output_folder, error_log_path)
+    process_downloaded_files(output_folder, output_folder)
